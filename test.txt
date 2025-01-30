@@ -1,0 +1,37 @@
+import os
+from openpyxl import load_workbook
+
+# Указываем имя Excel-файла
+excel_file = 'Лист XLSX.xlsx'  # Замените на имя вашего файла
+
+# Загружаем книгу Excel
+wb = load_workbook(excel_file)
+ws = wb.active
+
+# Определяем последнюю заполненную строку в колонке J
+last_filled_row = ws.max_row
+for row in range(last_filled_row, 0, -1):
+    if ws[f'J{row}'].value is not None:
+        last_filled_row = row
+        break
+
+# Указываем текущую папку (где лежат Excel и PDF)
+current_folder = os.getcwd()
+
+# Проходим по строкам в колонке J (начиная со второй строки, если первая — заголовок)
+for row in range(2, last_filled_row + 1):  # Начинаем с 2, если первая строка — заголовок
+    pdf_name = ws[f'J{row}'].value  # Получаем название PDF-файла из ячейки
+    if pdf_name and isinstance(pdf_name, str):  # Проверяем, что значение не пустое и строка
+        pdf_path = os.path.join(current_folder, pdf_name)  # Полный путь к PDF
+        if os.path.exists(pdf_path):  # Проверяем, существует ли файл
+            # Добавляем гиперссылку в соседнюю колонку (K)
+            ws[f'J{row}'] = pdf_name
+            ws[f'J{row}'].hyperlink = pdf_path
+            ws[f'J{row}'].style = 'Hyperlink'
+        else:
+            # Если файл не найден, можно добавить сообщение
+            ws[f'K{row}'] = 'Файл не найден'
+
+# Сохраняем изменения в Excel-файле
+wb.save(excel_file)
+print(f"Гиперссылки добавлены в файл '{excel_file}'.")
